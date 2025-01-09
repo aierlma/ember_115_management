@@ -9,7 +9,7 @@ services:
       - "8096:8096"
     volumes:
       - "~/emby/config:/config"  # 这里是 EmbyServer 文件的保存地址，这样每次重新构建 EmbyServer 可以保证配置不丢失
-      - "~/clouddrive/mounts/CloudDrive/115:/media"  # /volume1/CloudNAS/115 用你上一步 CD2 中选择的地址替代
+      - "~/clouddrive/mounts/CloudDrive/115:/media"  # ~/clouddrive/mounts/CloudDrive/115 用你上一步 CD2 中选择的地址替代
     environment:
       - "TZ=Asia/Shanghai"
 
