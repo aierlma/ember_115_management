@@ -1,0 +1,35 @@
+# 将该代码保存为 compose.yaml
+version: "3.5"
+services:
+  emby_server:
+    image: "emby/embyserver_arm64v8"  # 这里改可以成第三方 embyServer 镜像
+    container_name: "emby_server"
+    restart: always
+    ports:
+      - "8096:8096"
+    volumes:
+      - "~/emby/config:/config"  # 这里是 EmbyServer 文件的保存地址，这样每次重新构建 EmbyServer 可以保证配置不丢失
+      - "~/clouddrive/mounts/CloudDrive/115:/media"  # /volume1/CloudNAS/115 用你上一步 CD2 中选择的地址替代
+    environment:
+      - "TZ=Asia/Shanghai"
+
+  emby_115:
+    image: "aierlma/emby_115"
+    container_name: "emby_115"
+    restart: always
+    environment:
+      - "TZ=Asia/Shanghai"
+    env_file: ./115.env
+    depends_on:
+      - emby_server
+
+  emby_nginx:
+    image: "aierlma/emby_nginx"
+    container_name: "emby_nginx"
+    restart: always
+    ports:
+      - "8097:80"
+    environment:
+      - "TZ=Asia/Shanghai"
+    depends_on:
+      - emby_115
