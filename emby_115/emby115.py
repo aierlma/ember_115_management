@@ -26,15 +26,25 @@ from Crypto.Cipher import PKCS1_v1_5, AES
 from Crypto.PublicKey import RSA
 from Crypto import Random
 from ecdsa import ECDH, NIST224p, SigningKey
-from binascii import a2b_hex
-from flask import Flask, request, redirect
-from urllib.parse import urlparse, urlunparse
+from binascii import a2b_hex, b2a_hex
+import hashlib,base64,lz4.block,zlib
+import sys,os,time,platform
+import json,requests,random
+import getopt,ctypes,codecs
+import urllib
+from flask import Flask, request, jsonify,redirect
+
+from urllib.parse import urlparse, urlunparse, urljoin, quote
+from datetime import datetime
 
 
+#外网地址
 emby_www = os.environ.get("PUBLIC_HOST")
+#内网地址
 emby_loc = "http://emby_server:8096"
 api_key = os.environ.get("EMBY_API_KEY")
 cookie = os.environ.get("COOKIE")
+#挂载路径和挂载点， 比如115网盘的/电影，挂载到了/mv，如果挂载的115根目录留空。
 mount_mapping = json.loads(os.environ.get("MOUNT_PATH"))
 
 mode = '115'
@@ -319,7 +329,7 @@ def get_file_id(file_path, cookie):
     headers = {
         'Host': 'webapi.115.com',
         'User-Agent': 'Mozilla/5.0 115Browser/23.9.3.2',
-        'Cookie': cookie,
+        'Cookie':cookie,
         'Accept-Encoding': 'gzip',
     }
 
@@ -370,7 +380,6 @@ cache = URLCache()
 
 app = Flask(__name__)
 
-
 @app.route('/<path:path>', methods=['GET', 'POST'])
 def index(path=''):
     current_url = request.url
@@ -378,13 +387,13 @@ def index(path=''):
     parsed_url = urlparse(current_url)
     get_params = request.args
     original_headers = request.headers
-
     # 使用正则表达式匹配数字
     match = re.search(r'/videos/(\d+)/stream|/videos/(\d+)/original', current_url, re.IGNORECASE)
 
     # 提取匹配到的数字
     if match and request.args.get('MediaSourceId'):
-        video_id = match.group(1) or match.group(2)
+        video_id = match.group(1)
+        if not video_id: video_id = match.group(2)
         MediaSourceId = request.args.get('MediaSourceId')
         url = f'{emby_loc}/emby/Items/{video_id}/PlaybackInfo?&IsPlayback=false&api_key={api_key}'
         response = requests.post(url, headers=original_headers)
@@ -407,7 +416,6 @@ def index(path=''):
             return redirect(f'{url}&realplay=true', code=302)
 
     return "Invalid request.", 400
-
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=5115, threaded=True)
