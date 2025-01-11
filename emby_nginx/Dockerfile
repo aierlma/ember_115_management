@@ -1,15 +1,17 @@
-# 使用 Debian Bookworm 作为基础镜像
-FROM arm64v8/debian:bookworm-slim
 
-# 镜像维护者信息
+# 第 1 步：基础镜像
+FROM debian:bookworm
+
+# 第 2 步：声明维护者信息(仅示例)
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-# 设置环境变量
-ENV NGINX_VERSION=1.27.0
-ENV NJS_VERSION=0.8.4
-ENV NJS_RELEASE=2~bookworm
-ENV PKG_RELEASE=2~bookworm
+# 第 3 步：设置环境变量
+ENV NGINX_VERSION=1.27.0 \
+    NJS_VERSION=0.8.4 \
+    NJS_RELEASE=2~bookworm \
+    PKG_RELEASE=2~bookworm
 
+# 第 4 步：安装依赖并清理
 # 安装必要依赖并配置 NGINX
 RUN set -x \
     && groupadd --system --gid 101 nginx \
@@ -77,21 +79,22 @@ RUN set -x \
     && ln -sf /dev/stderr /var/log/nginx/error.log \
     && mkdir /docker-entrypoint.d
 
-# 复制配置和脚本
-COPY docker-entrypoint.sh /
+# 第 5 步：复制脚本/文件到镜像
+COPY docker-entrypoint.sh          /
 COPY 10-listen-on-ipv6-by-default.sh /docker-entrypoint.d/
-COPY 15-local-resolvers.envsh /docker-entrypoint.d/
-COPY 20-envsubst-on-templates.sh /docker-entrypoint.d/
-COPY 30-tune-worker-processes.sh /docker-entrypoint.d/
-COPY emby115.conf /etc/nginx/conf.d/
+COPY 15-local-resolvers.envsh        /docker-entrypoint.d/
+COPY 20-envsubst-on-templates.sh     /docker-entrypoint.d/
+COPY 30-tune-worker-processes.sh     /docker-entrypoint.d/
 
+# 第 6 步：如需覆盖默认配置，可直接 COPY 自定义配置文件到 conf.d
+#         （比如你要放 emby115.conf）
+COPY emby115.conf /etc/nginx/conf.d/emby115.conf
 # 删除默认配置文件
 RUN rm /etc/nginx/conf.d/default.conf
 
-# 设置入口点和默认命令
+# 第 7 步：暴露端口 / 设置停止信号 / 入口点 / 命令
+EXPOSE 80
+STOPSIGNAL SIGQUIT
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
 
-# 暴露端口和停止信号
-EXPOSE 80/tcp
-STOPSIGNAL SIGQUIT
