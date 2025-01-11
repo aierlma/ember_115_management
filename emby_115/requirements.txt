@@ -1,5 +1,6 @@
-requests-toolbelt==1.0.0
-pycryptodome==3.20.0
-ecdsa==0.19.0
-Flask==3.0.3
-lz4==4.3.3
+requests-toolbelt
+pycryptodome
+ecdsa
+Flask
+lz4
+gunicorn
